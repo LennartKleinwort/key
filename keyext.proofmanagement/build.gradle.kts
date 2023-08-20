@@ -1,13 +1,15 @@
+import com.github.jengelman.gradle.plugins.shadow.ShadowExtension
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
-    id 'application'
-    id 'com.github.johnrengelman.shadow' version "8.1.1"
+    id("application")
+    id("com.github.johnrengelman.shadow")
 }
 
 dependencies {
-    implementation project(':key.core')
-    implementation project(':key.ui')
-
-    implementation group: 'org.antlr', name: 'ST4', version: '4.3.4'
+    implementation(project(":key.core"))
+    implementation(project(":key.ui"))
+    implementation("org.antlr:ST4:4.3.4")
 }
 
 application {
@@ -26,7 +28,7 @@ run {
     // jvmArgs += ['--add-opens', 'java.base/java.util=ALL-UNNAMED']
 }
 
-shadowJar {
+tasks.named<ShadowJar>("shadowJar") {
     archiveClassifier = "exe"
     archiveBaseName = "keyext.proofmanagement"
 }

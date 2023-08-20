@@ -111,7 +111,7 @@ public final class HTMLReport {
 
         /*
          * This additional ModelAdaptor is workaround needed for access of Node.getValue in string
-         * template, otherwise we would have to add this to build.gradle files in key.ui and
+         * template, otherwise we would have to add this to build.gradle.kts.kts.kts files in key.ui and
          * keyext.proofmanagement:
          * jvmArgs += ['--add-opens', 'java.base/java.util=ALL-UNNAMED']
          */

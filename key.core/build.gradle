@@ -1,5 +1,5 @@
 plugins {
-    id 'ca.coglinc.javacc' version '2.4.0'
+    id "ca.coglinc.javacc" version "2.4.0"
     id 'antlr'
 }
 
@@ -174,8 +174,8 @@ task generateVersionFiles() {
 
     outputs.files sha1, branch, versionf
 
-    def gitRevision = gitRevParse('HEAD')
-    def gitBranch = gitRevParse('--abbrev-ref HEAD')
+    def gitRevision = "xxx"// gitRevParse('HEAD')
+    def gitBranch = "xxx"//gitRevParse('--abbrev-ref HEAD')
 
     doLast {
         sha1.text = gitRevision
