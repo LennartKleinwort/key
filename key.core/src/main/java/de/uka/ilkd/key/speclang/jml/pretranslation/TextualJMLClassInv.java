@@ -1,3 +1,6 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package de.uka.ilkd.key.speclang.jml.pretranslation;
 
 import java.util.Objects;
@@ -15,12 +18,20 @@ import org.key_project.util.collection.ImmutableList;
  */
 public final class TextualJMLClassInv extends TextualJMLConstruct {
     private final JmlParser.Class_invariantContext inv;
+    private final boolean free;
+
+    public TextualJMLClassInv(ImmutableList<JMLModifier> mods, ParserRuleContext inv, String name,
+            boolean free) {
+        super(mods, name);
+        inv = Objects.requireNonNull(ctx);
+        this.name = name;
+        this.free = free;
+        setPosition(inv);
+    }
 
     public TextualJMLClassInv(ImmutableList<JMLModifier> mods,
-            JmlParser.Class_invariantContext ctx) {
-        super(mods, null);
-        inv = Objects.requireNonNull(ctx);
-        setPosition(ctx);
+            JmlParser.Class_invariantContext inv, boolean free) {
+        this(mods, inv, null, free);
     }
 
     public String getName() {
@@ -57,4 +68,9 @@ public final class TextualJMLClassInv extends TextualJMLConstruct {
     public int hashCode() {
         return Objects.hash(mods, inv);
     }
+
+    public boolean isFree() {
+        return free;
+    }
+
 }

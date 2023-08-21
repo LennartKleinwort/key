@@ -1,3 +1,6 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package de.uka.ilkd.key.control;
 
 import java.io.File;
@@ -102,10 +105,14 @@ public abstract class AbstractUserInterfaceControl
      * @param info The {@link TaskFinishedInfo}.
      */
     protected void fireTaskFinished(TaskFinishedInfo info) {
-        ProverTaskListener[] listener =
-            proverTaskListener.toArray(new ProverTaskListener[0]);
-        for (ProverTaskListener l : listener) {
-            l.taskFinished(info);
+        try {
+            ProverTaskListener[] listener =
+                proverTaskListener.toArray(new ProverTaskListener[0]);
+            for (ProverTaskListener l : listener) {
+                l.taskFinished(info);
+            }
+        } catch (Exception e) {
+            LOGGER.error("failed to fire task finished event ", e);
         }
     }
 

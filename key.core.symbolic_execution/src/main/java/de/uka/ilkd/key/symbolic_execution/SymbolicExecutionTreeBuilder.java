@@ -1,3 +1,6 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package de.uka.ilkd.key.symbolic_execution;
 
 import java.util.*;
@@ -891,7 +894,7 @@ public class SymbolicExecutionTreeBuilder {
                                                                                   // tests for
                                                                                   // unknown
                                                                                   // reasons.
-                Goal goal = proof.getGoal(node);
+                Goal goal = proof.getOpenGoal(node);
                 if (goal != null) {
                     currentOrFutureRuleApplication = goal.getRuleAppManager().peekNext();
                 }
@@ -1273,7 +1276,7 @@ public class SymbolicExecutionTreeBuilder {
                 // Check selected child
                 if (node != null) {
                     if (node.childrenCount() == 0) {
-                        Goal goal = proof.getGoal(node);
+                        Goal goal = proof.getOpenGoal(node);
                         ruleApp = goal.getRuleAppManager().peekNext();
                     } else {
                         ruleApp = node.getAppliedRuleApp();
