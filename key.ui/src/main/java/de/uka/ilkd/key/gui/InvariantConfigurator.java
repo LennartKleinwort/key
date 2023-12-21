@@ -17,7 +17,6 @@ import de.uka.ilkd.key.java.Services;
 import de.uka.ilkd.key.java.statement.LoopStatement;
 import de.uka.ilkd.key.ldt.HeapLDT;
 import de.uka.ilkd.key.logic.NamespaceSet;
-import de.uka.ilkd.key.logic.ProgramElementName;
 import de.uka.ilkd.key.logic.Term;
 import de.uka.ilkd.key.logic.op.LocationVariable;
 import de.uka.ilkd.key.logic.sort.Sort;
@@ -182,11 +181,6 @@ public class InvariantConfigurator {
                 setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
                 final NamespaceSet nss = services.getNamespaces().copyWithParent();
-                Term self = loopInv.getInternalSelfTerm();
-                if (self != null) {
-                    nss.programVariables()
-                            .add(new LocationVariable(new ProgramElementName("self"), self.sort()));
-                }
                 parser = new KeyIO(services, nss);
                 parser.setAbbrevMap(getAbbrevMap());
 
