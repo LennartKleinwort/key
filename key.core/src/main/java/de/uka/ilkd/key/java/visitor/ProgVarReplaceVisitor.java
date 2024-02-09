@@ -654,7 +654,8 @@ public class ProgVarReplaceVisitor extends CreatingASTVisitor {
 
     @Override
     public void performActionOnSetStatement(final SetStatement x) {
-        final ProgramVariableCollection vars = x.getVars();
+        //TODO weigl set-statement
+        /*final ProgramVariableCollection vars = x.getVars();
         final Map<LocationVariable, Term> atPres = vars.atPres;
         final Map<LocationVariable, Term> newAtPres = new LinkedHashMap<>(atPres);
         final Map<LocationVariable, LocationVariable> atPreVars = vars.atPreVars;
@@ -679,7 +680,7 @@ public class ProgVarReplaceVisitor extends CreatingASTVisitor {
         if (!newAtPres.equals(vars.atPres)) {
             changed();
         }
-        doDefaultAction(x);
+        doDefaultAction(x);*/
     }
 
 }

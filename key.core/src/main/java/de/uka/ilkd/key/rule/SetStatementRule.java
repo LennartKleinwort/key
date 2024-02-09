@@ -3,23 +3,26 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package de.uka.ilkd.key.rule;
 
-import java.util.Optional;
-
 import de.uka.ilkd.key.java.JavaTools;
-import de.uka.ilkd.key.java.KeYJavaASTFactory;
 import de.uka.ilkd.key.java.Services;
 import de.uka.ilkd.key.java.SourceElement;
-import de.uka.ilkd.key.java.expression.operator.CopyAssignment;
 import de.uka.ilkd.key.java.reference.ExecutionContext;
 import de.uka.ilkd.key.java.reference.ReferencePrefix;
 import de.uka.ilkd.key.java.statement.SetStatement;
 import de.uka.ilkd.key.logic.*;
 import de.uka.ilkd.key.logic.op.*;
+import de.uka.ilkd.key.logic.sort.Sort;
+import de.uka.ilkd.key.parser.Location;
 import de.uka.ilkd.key.proof.Goal;
-
-import org.key_project.util.collection.ImmutableList;
-
+import de.uka.ilkd.key.proof.OpReplacer;
+import de.uka.ilkd.key.speclang.TermReplacementMap;
+import de.uka.ilkd.key.speclang.jml.translation.Context;
+import de.uka.ilkd.key.speclang.jml.translation.JMLSpecFactory;
+import de.uka.ilkd.key.speclang.jml.translation.ProgramVariableCollection;
+import de.uka.ilkd.key.speclang.njml.JmlIO;
+import de.uka.ilkd.key.speclang.translation.SLTranslationException;
 import org.jspecify.annotations.NonNull;
+import org.key_project.util.collection.ImmutableList;
 
 /**
  * A rule for set statements. This unwraps the contained CopyAssignment
@@ -74,7 +77,7 @@ public final class SetStatementRule implements BuiltInRule {
     public ImmutableList<Goal> apply(Goal goal, Services services, RuleApp ruleApp)
             throws RuleAbortException {
         if (!(ruleApp instanceof SetStatementBuiltInRuleApp)) {
-            throw new IllegalArgumentException("can only apply SetStatementBuiltInRuleApp");
+            throw new IllegalArgumentException("Can only apply SetStatementBuiltInRuleApp");
         }
 
         final TermBuilder tb = services.getTermBuilder();
@@ -86,22 +89,33 @@ public final class SetStatementRule implements BuiltInRule {
         Term update = UpdateApplication.getUpdate(formula);
         Term target = UpdateApplication.getTarget(formula);
 
-        SetStatement setStatement =
-            Optional.ofNullable(JavaTools.getActiveStatement(target.javaBlock()))
-                    .filter(SetStatement.class::isInstance).map(SetStatement.class::cast)
-                    .orElseThrow(() -> new RuleAbortException("not a Set Statement"));
-        ExecutionContext exCtx = JavaTools.getInnermostExecutionContext(target.javaBlock(), services);
-        ReferencePrefix prefix = exCtx.getRuntimeInstance();
-        Term self = tb.var((-ProgramVariable) prefix);
-        Term newUpdate = tb.elementary(setStatement.getTarget(self), setStatement.getValue(self));
+        try {
+            var setStatement = (SetStatement) JavaTools.getActiveStatement(target.javaBlock());
+            ExecutionContext exCtx = JavaTools.getInnermostExecutionContext(target.javaBlock(), services);
+            ReferencePrefix prefix = exCtx.getRuntimeInstance();
 
-        JavaBlock javaBlock = JavaTools.removeActiveStatement(target.javaBlock(), services);
+            Term self = tb.var((ProgramVariable) prefix);
 
-        Term newTerm = tb.apply(update, tb.apply(newUpdate, services.getTermFactory().createTerm(target.op(), target.subs(), target.boundVars(), javaBlock, target.getLabels())));
+            IProgramMethod pm = exCtx.getMethodContext();
+            var processor = new SetStatementProcessor(setStatement, services, (ProgramMethod) pm, self);
 
-        ImmutableList<Goal> result = goal.split(1);
-        result.head().changeFormula(new SequentFormula(newTerm), occurrence);
-        return result;
+            var lhs = processor.computeTarget();
+            var rhs = processor.computeValue();
+
+            Term newUpdate = tb.elementary(lhs, rhs);
+            JavaBlock javaBlock = JavaTools.removeActiveStatement(target.javaBlock(), services);
+            Term newTerm = tb.apply(update,
+                    tb.apply(newUpdate, services.getTermFactory().createTerm(target.op(), target.subs(), target.boundVars(), javaBlock, target.getLabels())));
+
+            ImmutableList<Goal> result = goal.split(1);
+            result.head().changeFormula(new SequentFormula(newTerm), occurrence);
+            return result;
+
+        } catch (ClassCastException e) {
+            throw new RuleAbortException("Not a set statement");
+        } catch (SLTranslationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -118,4 +132,65 @@ public final class SetStatementRule implements BuiltInRule {
     public String toString() {
         return name.toString();
     }
+}
+
+
+class SetStatementProcessor {
+    final SetStatement statement;
+    private final Term assignee;
+    private final Term value;
+    private final ProgramVariableCollection vars;
+    private final Services services;
+    private final OpReplacer replacer;
+
+    SetStatementProcessor(SetStatement statement, Services services, ProgramMethod pm, Term self) throws SLTranslationException {
+        this.statement = statement;
+        this.services = services;
+        var specFac = new JMLSpecFactory(services);
+        this.vars = specFac.createProgramVariablesForStatement(statement, pm);
+
+        var setStatementContext = statement.getParserContext();
+        var io = new JmlIO(services).context(Context.inMethod(pm, services.getTermBuilder()))
+                .selfVar(vars.selfVar)
+                .parameters(vars.paramVars)
+                .resultVariable(vars.resultVar).exceptionVariable(vars.excVar).atPres(vars.atPres)
+                .atBefore(vars.atBefores);
+        this.assignee = io.translateTerm(setStatementContext.assignee);
+        var value = io.translateTerm(setStatementContext.value);
+
+        if (value.sort() == Sort.FORMULA) {
+            value = services.getTermBuilder().convertToBoolean(value);
+        }
+        this.value = value;
+
+        String error = specFac.checkSetStatementAssignee(assignee);
+        if (error != null) {
+            throw new SLTranslationException(
+                    "Invalid assignment target for set statement: " + error,
+                    Location.fromToken(setStatementContext.start));
+        }
+        this.replacer = getReplacer(self);
+    }
+
+    @NonNull
+    private OpReplacer getReplacer(Term self) {
+        var termFactory = services.getTermFactory();
+        var replacementMap = new TermReplacementMap(termFactory);
+        if (self != null) {
+            replacementMap.replaceSelf(vars.selfVar, self, services);
+        }
+        replacementMap.replaceRemembranceLocalVariables(vars.atPreVars, vars.atPres, services);
+        replacementMap.replaceRemembranceLocalVariables(vars.atBeforeVars, vars.atBefores, services);
+        return new OpReplacer(replacementMap, termFactory, services.getProof());
+    }
+
+
+    Term computeValue() {
+        return replacer.replace(value);
+    }
+
+    Term computeTarget() {
+        return replacer.replace(assignee);
+    }
+
 }

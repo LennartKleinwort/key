@@ -194,8 +194,9 @@ public final class IntroAtPreDefsOp extends AbstractTermTransformer {
 
         @Override
         public void performActionOnSetStatement(SetStatement x) {
-            addNeededVariables(x.getVars().atPres.keySet());
-            x.updateVars(atPres, services);
+            //TODO weigl set-statement
+            //addNeededVariables(x.getVars().atPres.keySet());
+            //x.updateVars(atPres, services);
         }
 
         @Override

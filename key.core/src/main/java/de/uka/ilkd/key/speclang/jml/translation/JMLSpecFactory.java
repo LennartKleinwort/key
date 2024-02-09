@@ -1386,8 +1386,8 @@ public class JMLSpecFactory {
                     .create();
     }
 
-    private ProgramVariableCollection createProgramVariablesForStatement(Statement statement,
-            IProgramMethod pm) {
+    public ProgramVariableCollection createProgramVariablesForStatement(Statement statement,
+                                                                        IProgramMethod pm) {
         final Map<LocationVariable, LocationVariable> atPreVars = new LinkedHashMap<>();
         for (LocationVariable heap : services.getTypeConverter().getHeapLDT().getAllHeaps()) {
             atPreVars.put(heap, tb.atPreVar(heap.toString(), heap.sort(), true));
@@ -1453,6 +1453,7 @@ public class JMLSpecFactory {
      * @param statement the set statement
      * @param pm the enclosing method
      */
+    @Deprecated
     public void translateSetStatement(final SetStatement statement, final IProgramMethod pm)
             throws SLTranslationException {
         final var pv = createProgramVariablesForStatement(statement, pm);
@@ -1472,7 +1473,6 @@ public class JMLSpecFactory {
                 "Invalid assignment target for set statement: " + error,
                 Location.fromToken(setStatementContext.start));
         }
-        statement.setTranslated(assignee, value, pv);
     }
 
     /**
@@ -1485,7 +1485,7 @@ public class JMLSpecFactory {
      * @param variables an instance of {@link AuxiliaryContract.Variables} for the block.
      * @return
      */
-    private ProgramVariableCollection createProgramVariables(final IProgramMethod method,
+    public ProgramVariableCollection  createProgramVariables(final IProgramMethod method,
             final JavaStatement block, final AuxiliaryContract.Variables variables) {
         final Map<LocationVariable, LocationVariable> remembranceVariables =
             variables.combineRemembranceVariables();

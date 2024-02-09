@@ -1929,8 +1929,10 @@ public class PrettyPrinter implements Visitor {
         l.brk();
         JmlParser.Set_statementContext context = x.getParserContext();
 
-        Term target = x.getTarget();
-        Term value = x.getValue();
+        //TODO weigl set-statement
+          /*
+           Term target = x.getParserContext().assignee.getText();//x.getTarget();
+        Term value = x.getParserContext().value.getText();    //getValue();
         if(target != null && value != null) {
             l.print(LogicPrinter.quickPrintTerm(target, null));
             l.print(" = ");
@@ -1941,7 +1943,13 @@ public class PrettyPrinter implements Visitor {
             if(context != null) {
                 l.print(context.getText());
             }
-        }
+        }*/
+
+        var target =context.assignee.getText();//x.getTarget();
+        var value = context.value.getText();    //getValue();
+        l.print(target);
+        l.print(" = ");
+        l.print(value);
         l.end();
     }
 
