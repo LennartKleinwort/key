@@ -679,8 +679,8 @@ public class ProgVarReplaceVisitor extends CreatingASTVisitor {
         stack.peek().add(newVars);
         if (!newAtPres.equals(vars.atPres)) {
             changed();
-        }
-        doDefaultAction(x);*/
+        }*/
+        doDefaultAction(x);
     }
 
 }
